@@ -4,6 +4,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -90,20 +91,23 @@ public class ServerClass extends Thread {
 							i++;
 						}
 
-						/*
-						 * for (int k = 0; k < workerIdArray.length; k++) {
-						 * System.out.println(workerIdArray[k]); //bytes = workerIdArray[k].getBytes();
-						 * 
-						 * } //System.out.println(new String(bytes));
-						 */
-						// writer.println(bytes);
 					} catch (SQLException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					}
+						if (sock != null) {
+							try {
+								sock.close();
+							} catch (IOException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							// 접속 후 나가버린 클라이언트인 경우 ArrayList에서 제거
+							remove(sock);
+						}
+					} 
 				}
 			};
 			scheduler.scheduleAtFixedRate(task, 1000, 10000); // 1초 뒤 10초마다 반복실행
@@ -144,16 +148,7 @@ public class ServerClass extends Thread {
 				int resultCount = 0;
 				
 				Query(Id, Deviceid, Workerid, Tag, Location, EventDate, Flag, Count, StockCount, InputCount, OutputCount, resultCount);
-				/*
-				new Thread(() -> {
-					Query(Id, Deviceid, Workerid, Tag, Location, EventDate, Flag, Count, StockCount, InputCount, OutputCount, resultCount);
-				}).start();
 				
-				new Thread(() -> {
-					Query(Id, Deviceid, Workerid, Tag, Location, EventDate, Flag, Count, StockCount, InputCount, OutputCount, resultCount);
-				}).start();
-				*/
-				//Query(Id, Deviceid, Workerid, Tag, Location, EventDate, Flag, Count, StockCount, InputCount, OutputCount, resultCount);
 			}
 		} catch (IOException ex) {
 			System.out.println(sock + ": 에러(" + ex + ")");
@@ -366,8 +361,8 @@ public class ServerClass extends Thread {
 
 		// mariaDB 연동
 		driver = "org.mariadb.jdbc.Driver";
-		DB_IP = "119.196.33.217";
-		DB_PORT = "3307";
+		DB_IP = "119.196.33.217";  // 회사 공유기
+		DB_PORT = "3307";	// 외부 포트
 		DB_NAME = "autocabinet_web";
 		DB_URL = "jdbc:mariadb://" + DB_IP + ":" + DB_PORT + "/" + DB_NAME;
 
